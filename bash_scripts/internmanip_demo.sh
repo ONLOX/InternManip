@@ -1,3 +1,5 @@
+
+
 #!/bin/bash
 # **The recommended finetuning configurations is to boost your batch size to the max, and train for 20k steps.**
 
@@ -12,8 +14,5 @@ echo $master_addr
 
 #bash kill.sh
 
-MASTER_PORT=12111 PYTHONPATH=./ torchrun \
-   --nnodes=$SLURM_NNODES \
-   --nproc_per_node=1 --master_port=12322 \
-   --node_rank=$SLURM_PROCID --master_addr=$master_addr \
-   scripts/train/train.py --config run_configs/train/pi0_sweep.yaml
+MASTER_PORT=12111 PYTHONPATH=./ python \
+scripts/eval/start_evaluator.py --config run_configs/examples/internmanip_demo.py

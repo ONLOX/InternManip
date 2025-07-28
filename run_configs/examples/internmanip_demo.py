@@ -1,18 +1,20 @@
 from internmanip.configs import *
+# from internmanip.configs.model.pi0_cfg import PI0Config
 from pathlib import Path
 
 
 eval_cfg = EvalCfg(
     eval_type="simpler",
     agent=AgentCfg(
-        agent_type="gr00t_n1",
-        model_name_or_path="/PATH/TO/YOUR/GR00T_N15_FINETUNED_CHECKPOINT",
+        agent_type="pi0",
+        model_name_or_path="lerobot/pi0",
+        # model_cfg=PI0Config(),
         agent_settings={
-            "policy_setup": "widowx_bridge",
+            "policy_setup": "bridgedata_v2",
             "action_scale": 1.0,
             "exec_horizon": 1,
             "action_ensemble_temp": -0.8,
-            "embodiment_tag": "gr1",
+            "embodiment_tag": "widowx",
             "denoising_steps": 16,
         },
         server_cfg=ServerCfg(
@@ -31,7 +33,7 @@ eval_cfg = EvalCfg(
 
             ]
     ),
-    logging_dir=f"{Path(__file__).absolute().parents[2]}/logs/eval/simpler",
+    logging_dir=f"{Path(__file__).absolute().parents[2]}/eval_results/bridgedata_v2/pi0/",
     distributed_cfg=DistributedCfg(
         num_workers=4,
         ray_head_ip="10.150.91.18", # or "auto"

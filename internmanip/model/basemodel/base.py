@@ -21,9 +21,6 @@ class PolicyModelRegistry(Enum):
     GR00T_N15_GENMANIP = "GR00T_N1_5"
     PI0 = "PI0Policy"
     DP = "DPPolicy"
-    # NOTE: remove later
-    SEER = "SeerModel"
-    OPENVLA = "VLAModel"
 
     @property
     def value(self):
@@ -42,13 +39,6 @@ class PolicyModelRegistry(Enum):
         elif self.name == "DP":
             from internmanip.model.basemodel.diffusion_LMguided.modeling_diffusion import DiffusionModel
             return DiffusionModel
-        # NOTE: remove later
-        elif self.name == "SEER":
-            from internmanip.model.seer.seer_model import SeerModel
-            return SeerModel
-        elif self.name == "OPENVLA":
-            from internmanip.model.openvla.vla_model import VLAModel
-            return VLAModel
         else:
             raise ValueError(f"Invalid policy model type: {self.name}. Only {[model_type.name for model_type in PolicyModelRegistry]} are registered.")
 
@@ -89,7 +79,8 @@ class BasePolicyModel(PreTrainedModel):
         try:
             # NOTE(YL) This downloads the model to the local cache and returns the local path to the model
             # download the model, saved in ~/.cache/huggingface/hub/, return the path of folder
-            local_model_path = snapshot_download(pretrained_model_name_or_path, repo_type="model")
+            cache_dir = kwargs.pop('dir')
+            local_model_path = snapshot_download(pretrained_model_name_or_path, repo_type="model", cache_dir=cache_dir)
             print(
                 f"Model found in the huggingface hub. Loading from path: {pretrained_model_name_or_path}"
             )
