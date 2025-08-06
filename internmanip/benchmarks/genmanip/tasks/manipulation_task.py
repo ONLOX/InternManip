@@ -1,8 +1,8 @@
 import traceback
 from typing import Any, Dict
 
-from internutopia.core.scene.scene import IScene
 from internutopia.core.datahub import DataHub
+from internutopia.core.scene.scene import IScene
 from internutopia.core.task import BaseTask
 from internutopia.core.util import log
 
@@ -32,7 +32,7 @@ class ManipulationTask(BaseTask):
         """
         if not self.work:
             return {}
-        
+
         obs = {}
         for robot_name, robot in self.robots.items():
             try:
@@ -40,7 +40,9 @@ class ManipulationTask(BaseTask):
                 if _obs:
                     obs[robot_name] = _obs
                     obs[robot_name]['instruction'] = self.config.prompt
-                    obs[robot_name]['metric'] = self.metrics['manipulation_success_metric'].calc_episode_sr()
+                    obs[robot_name]['metric'] = self.metrics[
+                        'manipulation_success_metric'
+                    ].calc_episode_sr()
                     obs[robot_name]['step'] = self.steps
             except Exception as e:
                 log.error(self.name)
@@ -48,7 +50,7 @@ class ManipulationTask(BaseTask):
                 traceback.print_exc()
                 self.flag_error = True
                 return {}
-            
+
         return obs
 
     def calculate_metrics(self) -> dict:
@@ -57,7 +59,7 @@ class ManipulationTask(BaseTask):
             metrics_res[name] = metric.calc()
 
         return metrics_res
-    
+
     def is_done(self) -> bool:
         self.steps = self.steps + 1
         if self.metrics['manipulation_success_metric'].get_episode_sr() == 1:
@@ -65,18 +67,28 @@ class ManipulationTask(BaseTask):
 
         flag_max_step = self.steps > self.config.max_step
         flag_success = self.success_steps > self.config.max_success_step
-        
-        return DataHub.get_episode_finished(self.name) or flag_max_step or flag_success or self.flag_error
-    
+
+        return (
+            DataHub.get_episode_finished(self.name)
+            or flag_max_step
+            or flag_success
+            or self.flag_error
+        )
+
     def set_light_intensity(self):
-        from omni.isaac.core.utils.prims import get_prim_at_path, find_matching_prim_paths
-        
-        demolight_paths = find_matching_prim_paths("/World/*/scene/obj_defaultGroundPlane/GroundPlane/DomeLight")
+        from omni.isaac.core.utils.prims import (
+            find_matching_prim_paths,
+            get_prim_at_path,
+        )
+
+        demolight_paths = find_matching_prim_paths(
+            '/World/*/scene/obj_defaultGroundPlane/GroundPlane/DomeLight'
+        )
 
         for light_path in demolight_paths:
             prim = get_prim_at_path(light_path)
             intensity = prim.GetProperty('inputs:intensity')
-            per_light_intensity = max(180, 1000.0/len(demolight_paths))
+            per_light_intensity = max(180, 1000.0 / len(demolight_paths))
             intensity.Set(per_light_intensity)
 
     def clear_rigid_bodies(self):

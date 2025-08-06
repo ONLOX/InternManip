@@ -2,19 +2,19 @@ from pydantic import BaseModel
 
 class TrainCfg(BaseModel):
     """Configuration List."""
-    model_type: str = ""
+    model_type: str = 'pi0'
     """pi0 gr00t_n1 gr00t_n1_5 dp_clip act_clip pi0fast"""
     # Dataset parameters
-    dataset_path: str = './internmanip/demo_data/robot_sim_converted.PickNPlace/'
+    dataset_path: str | list[str] = 'InternRobotics/InternData-GenmanipTest'
     """Path to the dataset directory."""
 
     HF_cache_dir: str = None
     """Path to user-defined HF cache"""
 
-    output_dir: str = ""
+    output_dir: str = 'Checkpoints/runs'
     """Directory to save model checkpoints."""
 
-    data_config: str = "genmanip_joint"
+    data_config: str = 'genmanip_v1'
     """Data configuration name from DATA_CONFIG_MAP."""
 
     # Training parameters
@@ -30,11 +30,11 @@ class TrainCfg(BaseModel):
     save_steps: int = 500
     """Number of steps between saving checkpoints."""
 
-    compute_dtype: str = "bfloat16"
+    compute_dtype: str = 'bfloat16'
     """Data type for computation (e.g., 'float32', 'bfloat16')."""
 
     # Model parameters
-    base_model_path: str = ""
+    base_model_path: str = ''
     """Path or HuggingFace model ID for the base model."""
 
     tune_llm: bool = False
@@ -74,15 +74,23 @@ class TrainCfg(BaseModel):
     dataloader_num_workers: int = 8
     """Number of workers for data loading."""
 
-    report_to: str = "wandb"
+    report_to: str = 'wandb'
     """Where to report training metrics (e.g., 'wandb', 'tensorboard')."""
 
     # Data loading parameters
-    embodiment_tag: str = "new_embodiment"
+    embodiment_tag: str = 'new_embodiment'
     """Embodiment tag to use for training. e.g. 'new_embodiment'"""
 
-    video_backend: str = "torchcodec"
+    video_backend: str = 'torchcodec'
     """Video backend to use for training. [torchcodec, decord, torchvision_av]"""
+
+    # Mixture dataset parameters
+    balance_dataset_weights: bool = True
+    """Used in LeRobotMixtureDataset. If True, we will balance the dataset weights, by multiplying the total trajectory to each dataset"""
+
+    balance_trajectory_weights: bool = True
+    """Used in LeRobotMixtureDataset. If True, sample trajectories within a dataset weighted by their length; otherwise, equal weighting."""
+
 
     augsteps: int = 4
     """number of extra steps for augmentation when gripper changes"""
@@ -94,4 +102,5 @@ class TrainCfg(BaseModel):
     use_pretrained_model: bool = False
     """Whether to use a pretrained model."""
 
-
+    skip_unlabeled: bool = False
+    """Whether to skip unlabeled data."""

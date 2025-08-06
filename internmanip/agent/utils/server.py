@@ -1,5 +1,6 @@
+from transformers import AutoModel
 from internmanip.configs import ServerCfg, AgentCfg
-from internmanip.model.basemodel.base import BasePolicyModel
+# from internmanip.model.basemodel.base import BasePolicyModel
 from internmanip.agent.utils.io_utils import deserialize_data, serialize_data
 from typing import Dict, Any
 import uvicorn
@@ -13,16 +14,16 @@ class PolicyServer:
     def __init__(self, config: ServerCfg):
         self.host = config.server_host
         self.port = config.server_port
-        self.app = FastAPI(title="Policy Service")
-        self.policy_instances: Dict[str, BasePolicyModel] = {}
-        
-        self._router = APIRouter(prefix="/policy")
+        self.app = FastAPI(title='Policy Service')
+        self.policy_instances: Dict[str, Any] = {}
+
+        self._router = APIRouter(prefix='/policy')
         self._register_routes()
         self.app.include_router(self._router)
 
     def _register_routes(self):
         route_config = [
-            ("/initialize", self.init_policy, ["POST"], status.HTTP_201_CREATED),
+            ('/initialize', self.init_policy, ['POST'], status.HTTP_201_CREATED),
         ]
 
         for path, handler, methods, status_code in route_config:
@@ -34,22 +35,22 @@ class PolicyServer:
             )
 
         # dynamic register other called methods and attributes
-        @self._router.post("/{policy_name}/{attribute_name}")
+        @self._router.post('/{policy_name}/{attribute_name}')
         async def dynamic_attribute(policy_name: str, attribute_name: str, request: Dict[str, Any]):
             self._validate_policy_exists(policy_name)
             policy = self.policy_instances[policy_name]
-            
+
             if not hasattr(policy, attribute_name):
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Attribute {attribute_name} not found in policy {policy_name}"
+                    detail=f'Attribute {attribute_name} not found in policy {policy_name}'
                 )
-                
+
             attribute = getattr(policy, attribute_name)
             if callable(attribute):
-                args = request.get("args", [])
-                kwargs = request.get("kwargs", {})
-                
+                args = request.get('args', [])
+                kwargs = request.get('kwargs', {})
+
                 args = deserialize_data(args)
                 kwargs = deserialize_data(kwargs)
 
@@ -60,20 +61,21 @@ class PolicyServer:
 
     async def init_policy(self, request: Dict[str, Any]):
         policy_config = AgentCfg(**request)
-        policy = BasePolicyModel.init(
-            model_type=policy_config.agent_type,
-            model_name_or_path=policy_config.model_name_or_path, 
-            **policy_config.model_kwargs
-        )
+        if policy_config.base_model_path is None:
+            model = AutoModel.from_config(policy_config.model_cfg, **policy_config.model_kwargs)
+        else:
+            # must ensure that if the path is a huggingface model, it should be a repo that has only one model weight
+            model = AutoModel.from_pretrained(policy_config.base_model_path, **policy_config.model_kwargs)
+        policy_model = model
         policy_name = policy_config.agent_type
-        self.policy_instances[policy_name] = policy
-        return {"status": "success", "policy_name": policy_name}
+        self.policy_instances[policy_name] = policy_model
+        return {'status': 'success', 'policy_name': policy_name}
 
     def _validate_policy_exists(self, policy_name: str):
         if policy_name not in self.policy_instances:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Policy not found"
+                detail='Policy not found'
             )
 
     def run(self):
